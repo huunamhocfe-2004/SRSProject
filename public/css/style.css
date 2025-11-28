@@ -1,4 +1,3 @@
-
 body {
   background-color: #f3f4f6;
   color: #111827;
@@ -100,7 +99,12 @@ small {
   font-weight: 600;
   font-size: 14px;
 }
-
+.blog-name-sub {
+  font-size: 10px;
+  font-weight: 600;
+  font-style: italic;
+  color: #aaa;
+}
 .blog-subtitle {
   font-size: 12px;
   color: #6b7280;
@@ -554,7 +558,7 @@ body.dark-mode .suggestion-item:hover {
 body.dark-mode .preview-loading {
   background: rgba(15, 23, 42, 0.9);
 }
-body.dark-mode .markdown-editor .markdown-toolbar button{
+body.dark-mode .markdown-editor .markdown-toolbar button {
   color: #ebeaea;
 }
 body.dark-mode .markdown-editor .markdown-toolbar button:hover {
@@ -716,7 +720,7 @@ body.dark-mode .markdown-editor .markdown-toolbar button:hover {
   align-items: center;
   justify-content: center;
 }
-.markdown-toolbar .select-display{
+.markdown-toolbar .select-display {
   border: none !important;
   background-color: transparent !important;
   outline: none !important;
@@ -726,7 +730,7 @@ body.dark-mode .markdown-editor .markdown-toolbar button:hover {
 }
 .markdown-toolbar button:hover,
 .markdown-toolbar select:hover {
-  transition: .3s ease;
+  transition: 0.3s ease;
   box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
 }
 
@@ -770,7 +774,6 @@ body.dark-mode .markdown-editor .markdown-toolbar button:hover {
   font-size: 13px;
 }
 
-
 .md-popup {
   position: fixed;
   top: 0;
@@ -780,7 +783,7 @@ body.dark-mode .markdown-editor .markdown-toolbar button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,0.25);
+  background: rgba(0, 0, 0, 0.25);
   z-index: 9999;
 }
 
@@ -793,7 +796,7 @@ body.dark-mode .markdown-editor .markdown-toolbar button:hover {
   padding: 16px;
   border-radius: 8px;
   width: 260px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .md-popup-box h4 {
@@ -817,9 +820,9 @@ body.dark-mode .markdown-editor .markdown-toolbar button:hover {
 .md-preview-body a,
 #preview-content-text a,
 #m-content a {
-  color: #2b6cb0;          /* xanh đẹp */
+  color: #2b6cb0; /* xanh đẹp */
   text-decoration: underline;
-  font-weight: 600;        /* in đậm */
+  font-weight: 600; /* in đậm */
   cursor: pointer;
   transition: 0.2s;
 }
@@ -827,7 +830,7 @@ body.dark-mode .markdown-editor .markdown-toolbar button:hover {
 .md-preview-body a:hover,
 #preview-content-text a:hover,
 #m-content a:hover {
-  color: #1a4f80;          /* hover đậm hơn */
+  color: #1a4f80; /* hover đậm hơn */
   text-decoration: underline;
 }
 
@@ -835,12 +838,12 @@ body.dark-mode .markdown-editor .markdown-toolbar button:hover {
 .md-preview-body img,
 #preview-content-text img,
 #m-content img {
-  max-width: 60%;          /* ảnh nhỏ lại, không vượt quá preview */
-  max-height: 300px;       /* giới hạn chiều cao */
+  max-width: 60%; /* ảnh nhỏ lại, không vượt quá preview */
+  max-height: 300px; /* giới hạn chiều cao */
   display: block;
-  margin: 10px auto;       /* căn giữa */
-  border-radius: 5px;      /* bo góc */
-  object-fit: contain;     /* giữ tỉ lệ */
+  margin: 10px auto; /* căn giữa */
+  border-radius: 5px; /* bo góc */
+  object-fit: contain; /* giữ tỉ lệ */
 }
 
 /* Code block đẹp */
@@ -882,4 +885,44 @@ body.dark-mode .markdown-editor .markdown-toolbar button:hover {
   height: 150px;
   border-radius: 8px;
   margin-top: 8px;
+}
+
+.user-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.user-menu-popup {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  min-width: 200px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 0.75rem;
+  z-index: 20;
+}
+
+.user-menu-popup.hidden {
+  display: none;
+}
+
+.user-menu-info {
+  margin-bottom: 0.5rem;
+}
+
+.user-menu-name {
+  font-weight: 600;
+}
+
+.user-menu-email {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.btn.full-width {
+  width: 100%;
+  justify-content: center;
+  gap: 0.5rem;
 }

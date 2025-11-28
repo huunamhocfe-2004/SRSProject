@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Đăng nhập - Nam’s Blogger</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/login.css" />
+    <link rel="shortcut icon" href="/imgs/favicon.png" type="image/x-icon" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+  </head>
+  <body>
+    <div class="app-shell auth-page">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="avatar-circle">N</div>
+          <div class="blog-info">
+            <div class="blog-title">Nam’s Blogger</div>
+            <div class="blog-subtitle">Nơi lưu lại những câu chuyện nhỏ</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="/" class="topbar-link">
+            <i class="fa-solid fa-house"></i>
+            Về trang chủ
+          </a>
+        </div>
+      </header>
+
+      <main class="page">
+        <section class="auth-layout">
+          <div class="auth-hero">
+            <div class="hero-chip">
+              <i class="fa-solid fa-pen-nib"></i>
+              Blog cá nhân của Nam
+            </div>
+            <h1 class="hero-title">Chào mừng trở lại ✨</h1>
+            <p class="hero-text">
+              Đăng nhập để tiếp tục viết, chỉnh sửa và lưu giữ những bài viết ý
+              nghĩa của bạn.
+            </p>
+
+            <ul class="hero-list">
+              <li>
+                <i class="fa-regular fa-circle-check"></i>
+                Lưu bản nháp và xuất bản bất cứ lúc nào
+              </li>
+              <li>
+                <i class="fa-regular fa-circle-check"></i>
+                Quản lý bài viết dễ dàng, trực quan
+              </li>
+              <li>
+                <i class="fa-regular fa-circle-check"></i>
+                Giao diện nhẹ, tập trung vào nội dung
+              </li>
+            </ul>
+          </div>
+
+          <section class="card form-card auth-card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Đăng nhập</h2>
+                <p class="card-subtitle">
+                  Sử dụng email và mật khẩu đã đăng ký để tiếp tục.
+                </p>
+              </div>
+            </div>
+
+            <form method="POST" action="/login" class="auth-form">
+              <div class="form-group">
+                <div class="field-header">
+                  <label for="email">Email</label>
+                  <span class="field-hint">Dùng email bạn đã đăng ký</span>
+                </div>
+                <div class="input-wrapper">
+                  <span class="input-icon">
+                    <i class="fa-regular fa-envelope"></i>
+                  </span>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    class="input"
+                    placeholder="you@example.com"
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="field-header">
+                  <label for="password">Mật khẩu</label>
+                  <a href="/forgot-password" class="field-link"
+                    >Quên mật khẩu?</a
+                  >
+                </div>
+                <div class="input-wrapper">
+                  <span class="input-icon">
+                    <i class="fa-solid fa-lock"></i>
+                  </span>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    class="input"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+
+              <div class="form-footer">
+                <div class="form-footer-left">
+                  <span class="muted-text">Chưa có tài khoản?</span>
+                  <a href="/register" class="link">Đăng ký ngay</a>
+                </div>
+                <div class="form-footer-right">
+                  <button type="submit" class="btn primary">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Đăng nhập</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </section>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

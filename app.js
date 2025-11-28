@@ -2,9 +2,19 @@
 const express = require("express");
 const path = require("path");
 const { sql, poolPromise } = require("./db");
+const session = require("express-session");
 
 const app = express();
 const PORT = 3000;
+
+app.use(
+  session({
+    secret: "some-super-secret-key", // đổi thành chuỗi riêng của bạn
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 1000 * 60 * 60 * 24 }, // 1 ngày
+  })
+);
 
 // Middleware đọc form (application/x-www-form-urlencoded)
 app.use(express.urlencoded({ extended: true }));
@@ -16,8 +26,21 @@ app.use(express.static(path.join(__dirname, "public")));
 // ========== 1) FORM ĐĂNG KÝ USER ==========
 
 // GET /register -> trả về file register.html
+// app.get("/register", (req, res) => {
+//   res.sendFile(path.join(__dirname, "public", "register.html"));
+// });
+
+// GET /register -> chuyển về /auth
 app.get("/register", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "register.html"));
+  res.redirect("/auth");
+});
+
+// GET /login -> chuyển về /auth
+app.get("/login", (req, res) => {
+  if (req.session.user) {
+    return res.redirect("/posts/new");
+  }
+  res.redirect("/auth");
 });
 
 // POST /register -> nhận dữ liệu form, insert vào bảng Users
@@ -52,10 +75,77 @@ app.post("/register", async (req, res) => {
   }
 });
 
+// ========== LOGIN ==========
+
+// GET /login -> trả file login.html
+// app.get("/login", (req, res) => {
+//   // Nếu đã đăng nhập thì cho vào luôn /posts/new
+//   if (req.session.user) {
+//     return res.redirect("/posts/new");
+//   }
+//   res.sendFile(path.join(__dirname, "public", "login.html"));
+// });
+
+// POST /login -> kiểm tra email + password
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.send("Vui lòng nhập đầy đủ email và mật khẩu!");
+  }
+
+  try {
+    const pool = await poolPromise;
+    const rq = pool.request();
+    rq.input("email", sql.VarChar(100), email);
+
+    const result = await rq.query(`
+      SELECT user_id, name, email, password_hash
+      FROM Users
+      WHERE email = @email;
+    `);
+
+    if (result.recordset.length === 0) {
+      return res.send("Email không tồn tại hoặc mật khẩu không đúng!");
+    }
+
+    const user = result.recordset[0];
+
+    // Bạn đang lưu plain text vào password_hash, nên chỉ cần so sánh chuỗi
+    if (user.password_hash !== password) {
+      return res.send("Email không tồn tại hoặc mật khẩu không đúng!");
+    }
+
+    // Lưu thông tin user vào session
+    req.session.user = {
+      user_id: user.user_id,
+      name: user.name,
+      email: user.email,
+    };
+
+    // Đăng nhập xong, chuyển sang trang tạo bài viết
+    res.redirect("/posts/new");
+  } catch (err) {
+    console.error(err);
+    res.send("Lỗi khi đăng nhập: " + err.message);
+  }
+});
+
+// (optional) Logout
+app.get("/logout", (req, res) => {
+  req.session.destroy(() => {
+    res.redirect("/auth");
+  });
+});
+
 // ========== 2) FORM TẠO BÀI VIẾT ==========
 
-// GET /posts/new -> trả về file new_post.html
+// GET /posts/new -> chỉ cho vào nếu đã đăng nhập
 app.get("/posts/new", (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
   res.sendFile(path.join(__dirname, "public", "new_post.html"));
 });
 
@@ -258,6 +348,16 @@ app.post("/posts/new", async (req, res) => {
   }
 });
 
+// Trang auth chung (login + register trong 1 trang)
+app.get("/auth", (req, res) => {
+  // Nếu đã đăng nhập thì cho vào luôn /posts/new
+  if (req.session.user) {
+    return res.redirect("/posts/new");
+  }
+
+  res.sendFile(path.join(__dirname, "public", "auth.html"));
+});
+
 // GET /categories/new -> form tạo category
 app.get("/categories/new", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "new_category.html"));
@@ -439,6 +539,19 @@ app.get("/api/categories", async (req, res) => {
       .json({ error: "Lỗi lấy danh sách category", detail: err.message });
   }
 });
+// API trả user đang đăng nhập
+app.get("/api/me", (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: "Chưa đăng nhập" });
+  }
+  res.json(req.session.user); // { user_id, name, email }
+});
+// Logout
+// app.get("/logout", (req, res) => {
+//   req.session.destroy(() => {
+//     res.redirect("/login");
+//   });
+// });
 
 app.listen(PORT, () => {
   console.log(`🚀 Server chạy tại http://localhost:${PORT}`);

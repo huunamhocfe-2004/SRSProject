@@ -5,14 +5,91 @@ document.addEventListener("DOMContentLoaded", () => {
   const contentInput = document.getElementById("content");
   const statusSelect = document.getElementById("status");
   const excerptInput = document.getElementById("excerpt");
+  const authorInput = document.getElementById("author_id");
+  const blogTitle = document.getElementById("blog-title");
+
+  const userMenuToggle = document.getElementById("user-menu-toggle");
+  const userMenuPopup = document.getElementById("user-menu-popup");
+  const logoutBtn = document.getElementById("logout-btn");
+  const userMenuName = document.getElementById("user-menu-name");
+  const userMenuEmail = document.getElementById("user-menu-email");
+  // ===== Lấy user đang đăng nhập và hiển thị lên UI =====
+  async function loadCurrentUser() {
+    try {
+      const res = await fetch("/api/me");
+      if (res.status === 401) {
+        // chưa đăng nhập -> quay về /login
+        window.location.href = "/login";
+        return;
+      }
+
+      const user = await res.json(); // { user_id, name, email }
+
+      if (authorInput && user.user_id) {
+        authorInput.value = user.user_id;
+        authorInput.readOnly = true;
+      }
+
+      if (blogTitle && user.name) {
+        blogTitle.textContent = `${user.name}`;
+      }
+
+      if (userMenuName && user.name) {
+        userMenuName.textContent = user.name;
+      }
+      if (userMenuEmail && user.email) {
+        userMenuEmail.textContent = user.email;
+      }
+
+      // Avatar hiển thị chữ cái đầu tên
+      if (userMenuToggle && user.name) {
+        userMenuToggle.textContent = user.name.trim()[0].toUpperCase();
+      }
+    } catch (err) {
+      console.error("Lỗi load user hiện tại:", err);
+      window.location.href = "/login";
+    }
+  }
+
+  // Gọi luôn khi vào trang tạo bài mới
+  loadCurrentUser();
+
+  // Gọi luôn khi vào trang
+  loadCurrentUser();
+
+  // ===== User menu: mở popup khi click avatar =====
+  if (userMenuToggle && userMenuPopup) {
+    userMenuToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      userMenuPopup.classList.toggle("hidden");
+    });
+
+    // Click bên ngoài thì đóng popup
+    document.addEventListener("click", (e) => {
+      if (
+        !userMenuPopup.classList.contains("hidden") &&
+        !userMenuPopup.contains(e.target) &&
+        !userMenuToggle.contains(e.target)
+      ) {
+        userMenuPopup.classList.add("hidden");
+      }
+    });
+  }
+
+  // ===== Logout =====
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      // Gọi route /logout rồi server sẽ redirect về /login
+      window.location.href = "/logout";
+    });
+  }
 
   // Slug (tùy chọn)
-const slugInput = document.getElementById("slug");
+  const slugInput = document.getElementById("slug");
 
-// Cover image
-const coverInput = document.getElementById("cover_image");
-const coverPreview = document.getElementById("cover-preview");
-
+  // Cover image
+  const coverInput = document.getElementById("cover_image");
+  const coverPreview = document.getElementById("cover-preview");
 
   // Category
   const categoryIdsInput = document.getElementById("category_ids");
@@ -147,56 +224,55 @@ const coverPreview = document.getElementById("cover-preview");
   }
 
   // User đã tự sửa slug chưa?
-let slugEditedByUser = false;
+  let slugEditedByUser = false;
 
-if (slugInput) {
-  slugInput.addEventListener("input", () => {
-    slugEditedByUser = slugInput.value.trim().length > 0;
+  if (slugInput) {
+    slugInput.addEventListener("input", () => {
+      slugEditedByUser = slugInput.value.trim().length > 0;
 
-    // cập nhật preview slug theo slug người dùng nhập
-    const slugVal = slugInput.value.trim();
-    const title = titleInput.value.trim();
-    if (slugVal) {
-      previewSlug.textContent = slugVal;
-    } else {
-      previewSlug.textContent = title ? slugify(title) : "slug-bai-viet";
-    }
-  });
-}
+      // cập nhật preview slug theo slug người dùng nhập
+      const slugVal = slugInput.value.trim();
+      const title = titleInput.value.trim();
+      if (slugVal) {
+        previewSlug.textContent = slugVal;
+      } else {
+        previewSlug.textContent = title ? slugify(title) : "slug-bai-viet";
+      }
+    });
+  }
 
-// ===== Preview ảnh cover =====
-if (coverInput && coverPreview) {
-  coverInput.addEventListener("change", () => {
-    const file = coverInput.files[0];
-    if (!file) {
-      coverPreview.innerHTML = "";
-      return;
-    }
+  // ===== Preview ảnh cover =====
+  if (coverInput && coverPreview) {
+    coverInput.addEventListener("change", () => {
+      const file = coverInput.files[0];
+      if (!file) {
+        coverPreview.innerHTML = "";
+        return;
+      }
 
-    const url = URL.createObjectURL(file);
-    coverPreview.innerHTML = `<img src="${url}" alt="Ảnh cover" />`;
-  });
-}
-
+      const url = URL.createObjectURL(file);
+      coverPreview.innerHTML = `<img src="${url}" alt="Ảnh cover" />`;
+    });
+  }
 
   // ===== Preview basic fields =====
   function updateTitle() {
     const title = titleInput.value.trim();
     previewTitle.textContent = title || "Tiêu đề bài viết";
     // nếu user chưa tự sửa slug → auto sinh theo title
-  if (slugInput && !slugEditedByUser) {
-    const autoSlug = title ? slugify(title) : "";
-    slugInput.value = autoSlug;
-    previewSlug.textContent = autoSlug || "slug-bai-viet";
-  } else if (slugInput) {
-    // user đã sửa slug → ưu tiên slug user nhập
-    const slugVal = slugInput.value.trim();
-    previewSlug.textContent =
-      slugVal || (title ? slugify(title) : "slug-bai-viet");
-  } else {
-    // fallback nếu không có ô slug
-    previewSlug.textContent = title ? slugify(title) : "slug-bai-viet";
-  }
+    if (slugInput && !slugEditedByUser) {
+      const autoSlug = title ? slugify(title) : "";
+      slugInput.value = autoSlug;
+      previewSlug.textContent = autoSlug || "slug-bai-viet";
+    } else if (slugInput) {
+      // user đã sửa slug → ưu tiên slug user nhập
+      const slugVal = slugInput.value.trim();
+      previewSlug.textContent =
+        slugVal || (title ? slugify(title) : "slug-bai-viet");
+    } else {
+      // fallback nếu không có ô slug
+      previewSlug.textContent = title ? slugify(title) : "slug-bai-viet";
+    }
   }
   function updateExcerpt() {
     const excerpt = excerptInput.value.trim();

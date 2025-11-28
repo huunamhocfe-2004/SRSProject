@@ -58,10 +58,41 @@
       <!-- Top bar -->
       <header class="topbar">
         <div class="topbar-left">
-          <div class="avatar-circle">N</div>
+          <!-- USER MENU WRAPPER -->
+          <div class="user-menu">
+            <!-- Avatar click để mở popup -->
+            <button
+              type="button"
+              class="avatar-circle"
+              id="user-menu-toggle"
+              title="Tài khoản"
+            >
+              N
+            </button>
+
+            <!-- Popup đăng xuất -->
+            <div class="user-menu-popup hidden" id="user-menu-popup">
+              <div class="user-menu-info">
+                <div class="user-menu-name" id="user-menu-name">
+                  Nam’s Blogger
+                </div>
+                <div class="user-menu-email" id="user-menu-email"></div>
+              </div>
+              <button
+                type="button"
+                class="btn ghost full-width"
+                id="logout-btn"
+              >
+                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+              </button>
+            </div>
+          </div>
+
           <div>
-            <div class="blog-title">Nam’s Blogger · Admin</div>
-            <div class="blog-subtitle">Soạn bài mới</div>
+            <div class="blog-name">
+              <div class="blog-title" id="blog-title"></div>
+            </div>
+            <div class="blog-name-sub">Member</div>
           </div>
         </div>
         <div class="topbar-right">

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Nam’s Blogger - Đăng nhập / Đăng ký</title>
+    <link rel="shortcut icon" href="/imgs/favicon.png" type="image/x-icon" />
+    <link rel="stylesheet" href="/css/auth.css" />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="auth-page">
+      <div class="auth-hero">
+        <div class="hero-chip">
+          <i class="fa-solid fa-pen-nib"></i>
+          Nam’s Blogger
+        </div>
+        <h1 class="hero-title">Lưu lại những câu chuyện mỗi ngày ✨</h1>
+        <p class="hero-text">
+          Đăng nhập hoặc tạo tài khoản mới để viết, chỉnh sửa và quản lý bài
+          viết trên blog cá nhân của bạn.
+        </p>
+        <ul class="hero-list">
+          <li>
+            <i class="fa-regular fa-circle-check"></i>
+            Giao diện tối giản, tập trung vào nội dung
+          </li>
+          <li>
+            <i class="fa-regular fa-circle-check"></i>
+            Lưu bản nháp và xuất bản bất cứ lúc nào
+          </li>
+          <li>
+            <i class="fa-regular fa-circle-check"></i>
+            Quản lý bài viết nhanh, trực quan
+          </li>
+        </ul>
+      </div>
+
+      <!-- Wrapper có class mode-register khi ở chế độ đăng ký -->
+      <div class="auth-wrapper" id="authWrapper">
+        <div class="auth-card">
+          <div class="auth-header">
+            <div class="auth-logo-wrapper">
+              <div class="auth-logo">
+                <i class="fa-solid fa-feather-pointed"></i>
+              </div>
+              <p class="logo-name">Nam’s Blogger</p>
+            </div>
+
+            <div class="auth-tabs">
+              <button
+                type="button"
+                class="auth-tab is-active"
+                data-mode="login"
+              >
+                Đăng nhập
+              </button>
+              <button type="button" class="auth-tab" data-mode="register">
+                Đăng ký
+              </button>
+            </div>
+          </div>
+
+          <!-- Tiêu đề + subtitle cho từng mode -->
+          <div class="auth-titles">
+            <div class="title-panel title-login">
+              <h2 class="auth-title">Chào mừng trở lại 👋</h2>
+              <p class="auth-subtitle">
+                Đăng nhập để tiếp tục sử dụng blog và quản lý bài viết của bạn.
+              </p>
+            </div>
+
+            <div class="title-panel title-register">
+              <h2 class="auth-title">Tạo tài khoản mới</h2>
+              <p class="auth-subtitle">
+                Điền thông tin bên dưới để đăng ký tài khoản và bắt đầu viết
+                blog.
+              </p>
+            </div>
+          </div>
+
+          <!-- Phần form có animation chuyển qua lại -->
+          <div class="auth-forms">
+            <!-- FORM ĐĂNG NHẬP -->
+            <form
+              method="POST"
+              action="/login"
+              class="auth-form form-panel form-login"
+              autocomplete="on"
+            >
+              <div class="form-group">
+                <div class="field-header">
+                  <label for="login_email">Email</label>
+                </div>
+                <div class="input-wrapper">
+                  <span class="input-icon">
+                    <i class="fa-regular fa-envelope"></i>
+                  </span>
+                  <input
+                    id="login_email"
+                    type="email"
+                    name="email"
+                    placeholder="you@example.com"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="field-header">
+                  <label for="login_password">Mật khẩu</label>
+                  <a href="/forgot-password" class="field-link"
+                    >Quên mật khẩu?</a
+                  >
+                </div>
+                <div class="input-wrapper">
+                  <span class="input-icon">
+                    <i class="fa-solid fa-lock"></i>
+                  </span>
+                  <input
+                    id="login_password"
+                    type="password"
+                    name="password"
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-footer">
+                <div class="form-footer-left">
+                  <span class="muted-text">Chưa có tài khoản?</span>
+                  <button type="button" class="link-btn" data-mode="register">
+                    Đăng ký ngay
+                  </button>
+                </div>
+                <div class="form-footer-right">
+                  <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Đăng nhập</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            <!-- FORM ĐĂNG KÝ (giữ nguyên logic / field name như bạn gửi) -->
+            <form
+              method="POST"
+              action="/register"
+              class="auth-form form-panel form-register"
+              autocomplete="off"
+            >
+              <div class="form-group">
+                <label for="user_name">Tên đăng nhập</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">
+                    <i class="fa-regular fa-user"></i>
+                  </span>
+                  <input
+                    id="user_name"
+                    type="text"
+                    name="user_name"
+                    placeholder="vd: nguyenvana"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="name">Tên hiển thị</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">
+                    <i class="fa-regular fa-id-badge"></i>
+                  </span>
+                  <input
+                    id="name"
+                    type="text"
+                    name="name"
+                    placeholder="vd: Nguyễn Văn A"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="register_email">Email</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">
+                    <i class="fa-regular fa-envelope-open"></i>
+                  </span>
+                  <input
+                    id="register_email"
+                    type="email"
+                    name="email"
+                    placeholder="vd: email@domain.com"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="register_password">Mật khẩu</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">
+                    <i class="fa-solid fa-key"></i>
+                  </span>
+                  <input
+                    id="register_password"
+                    type="password"
+                    name="password"
+                    placeholder="Nhập mật khẩu"
+                    required
+                  />
+                </div>
+                <small class="form-hint">
+                  Mật khẩu nên có ít nhất 8 ký tự, bao gồm chữ và số.
+                </small>
+              </div>
+
+              <div class="form-footer">
+                <div class="form-footer-left">
+                  <span class="muted-text">Đã có tài khoản?</span>
+                  <button type="button" class="link-btn" data-mode="login">
+                    Đăng nhập
+                  </button>
+                </div>
+                <div class="form-footer-right">
+                  <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Đăng ký</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        (function () {
+          const wrapper = document.getElementById("authWrapper");
+          const switchButtons = document.querySelectorAll("[data-mode]");
+          const tabs = document.querySelectorAll(".auth-tab");
+
+          function setMode(mode) {
+            const isRegister = mode === "register";
+
+            wrapper.classList.toggle("mode-register", isRegister);
+
+            tabs.forEach((tab) => {
+              tab.classList.toggle("is-active", tab.dataset.mode === mode);
+            });
+          }
+
+          switchButtons.forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const mode = btn.dataset.mode;
+              setMode(mode);
+            });
+          });
+
+          // Mặc định là đăng nhập
+          setMode("login");
+        })();
+      </script>
+    </div>
+  </body>
+</html>
