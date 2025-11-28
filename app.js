@@ -1,0 +1,445 @@
+// app.js
+const express = require("express");
+const path = require("path");
+const { sql, poolPromise } = require("./db");
+
+const app = express();
+const PORT = 3000;
+
+// Middleware đọc form (application/x-www-form-urlencoded)
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+// Serve folder public (html, css, js)
+app.use(express.static(path.join(__dirname, "public")));
+
+// ========== 1) FORM ĐĂNG KÝ USER ==========
+
+// GET /register -> trả về file register.html
+app.get("/register", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "register.html"));
+});
+
+// POST /register -> nhận dữ liệu form, insert vào bảng Users
+app.post("/register", async (req, res) => {
+  const { user_name, name, email, password } = req.body;
+
+  if (!user_name || !name || !email || !password) {
+    return res.send("Vui lòng nhập đầy đủ thông tin!");
+  }
+
+  try {
+    const pool = await poolPromise;
+
+    // Ở đây mình lưu plain text cho dễ, thực tế nên hash
+    const request = pool.request();
+    request.input("user_name", sql.VarChar(50), user_name);
+    request.input("name", sql.VarChar(100), name);
+    request.input("email", sql.VarChar(100), email);
+    request.input("password_hash", sql.VarChar(255), password);
+
+    const query = `
+      INSERT INTO Users (user_name, name, email, password_hash, role, status, created_at)
+      VALUES (@user_name, @name, @email, @password_hash, 'member', 'active', GETDATE())
+    `;
+
+    await request.query(query);
+
+    res.send('Đăng ký thành công! <a href="/register">Quay lại</a>');
+  } catch (err) {
+    console.error(err);
+    res.send("Lỗi khi đăng ký: " + err.message);
+  }
+});
+
+// ========== 2) FORM TẠO BÀI VIẾT ==========
+
+// GET /posts/new -> trả về file new_post.html
+app.get("/posts/new", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "new_post.html"));
+});
+
+// Helper tạo slug từ text (bỏ dấu, ký tự đặc biệt, khoảng trắng -> -)
+function slugify(text) {
+  return text
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
+// POST /posts/new -> chèn vào Posts, Post_Categories, Post_Tags với validate
+app.post("/posts/new", async (req, res) => {
+  console.log("REQ BODY = ", req.body);
+  const {
+    author_id,
+    title,
+    slug: slugInput,
+    excerpt,
+    content,
+    status,
+    category_ids,
+    tag_ids,
+  } = req.body;
+
+  if (!author_id || !title || !content) {
+    return res.send("Vui lòng nhập đủ author_id, title, content!");
+  }
+
+  const authorIdNum = parseInt(author_id, 10);
+  if (isNaN(authorIdNum)) {
+    return res.send("author_id phải là số nguyên!");
+  }
+
+  const categoryIds = (category_ids || "")
+    .split(",")
+    .map((x) => parseInt(x.trim(), 10))
+    .filter((x) => !isNaN(x));
+
+  const tagIds = (tag_ids || "")
+    .split(",")
+    .map((x) => parseInt(x.trim(), 10))
+    .filter((x) => !isNaN(x));
+
+  let transaction;
+
+  try {
+    const pool = await poolPromise;
+
+    // 1) Kiểm tra author_id tồn tại
+    let rq = pool.request();
+    rq.input("author_id", sql.BigInt, authorIdNum);
+    const authorResult = await rq.query(`
+      SELECT user_id FROM Users WHERE user_id = @author_id;
+    `);
+    if (authorResult.recordset.length === 0) {
+      return res.send(
+        `author_id = ${authorIdNum} không tồn tại trong Users. Vui lòng đăng ký user trước!`
+      );
+    }
+
+    // 2) Kiểm tra categories
+    for (const cid of categoryIds) {
+      let rc = pool.request();
+      rc.input("category_id", sql.Int, cid);
+      const cat = await rc.query(`
+        SELECT category_id FROM Categories WHERE category_id = @category_id;
+      `);
+      if (cat.recordset.length === 0) {
+        return res.send(`category_id = ${cid} không tồn tại trong Categories!`);
+      }
+    }
+
+    // 3) Kiểm tra tags
+    for (const tid of tagIds) {
+      let rt = pool.request();
+      rt.input("tag_id", sql.Int, tid);
+      const tag = await rt.query(`
+        SELECT tag_id FROM Tags WHERE tag_id = @tag_id;
+      `);
+      if (tag.recordset.length === 0) {
+        return res.send(`tag_id = ${tid} không tồn tại trong Tags!`);
+      }
+    }
+
+    // 4) Tạo slug unique (giới hạn vòng lặp tránh bị kẹt)
+    // 4) Tạo slug unique (ưu tiên slug user nhập nếu có)
+    let baseSlug;
+
+    if (slugInput && slugInput.trim() !== "") {
+      // user nhập slug → dùng slug đó sau khi slugify
+      baseSlug = slugify(slugInput.trim());
+    } else {
+      // không nhập → slugify từ title như cũ
+      baseSlug = slugify(title);
+    }
+
+    if (!baseSlug || baseSlug.trim() === "") baseSlug = "post";
+
+    let finalSlug = baseSlug;
+    let suffix = 1;
+
+    for (let i = 0; i < 50; i++) {
+      const rqSlug = pool.request();
+      rqSlug.input("slug", sql.VarChar(255), finalSlug);
+      const slugResult = await rqSlug.query(`
+    SELECT post_id FROM Posts WHERE slug = @slug;
+  `);
+      if (slugResult.recordset.length === 0) break;
+      finalSlug = `${baseSlug}-${suffix++}`;
+    }
+
+    // 5) Transaction: insert Posts + Post_Categories + Post_Tags
+    transaction = new sql.Transaction(pool);
+    await transaction.begin();
+
+    // 5.1 Insert vào Posts
+    const reqPost = new sql.Request(transaction);
+    reqPost.input("author_id", sql.BigInt, authorIdNum);
+    // 🔹 CHANGED: dùng NVARCHAR cho text
+    reqPost.input("title", sql.NVarChar(255), title);
+    reqPost.input("slug", sql.NVarChar(255), finalSlug);
+    reqPost.input("excerpt", sql.NVarChar(sql.MAX), excerpt || null);
+    reqPost.input("content", sql.NVarChar(sql.MAX), content || null);
+
+    // 🔹 CHANGED: chuẩn hóa status, bỏ dòng status || 'draft' || ...
+    const statusValue = status || "draft";
+    reqPost.input("status", sql.VarChar(20), statusValue);
+
+    // 🔹 CHANGED: published_at = GETDATE() nếu status = 'published'
+    const insertPostQuery = `
+      INSERT INTO Posts (
+        author_id, title, slug, excerpt, content, status, published_at,
+        view_count, is_featured, created_at, updated_at
+      )
+      OUTPUT INSERTED.post_id AS post_id
+      VALUES (
+        @author_id,
+        @title,
+        @slug,
+        @excerpt,
+        @content,
+        @status,
+        CASE WHEN @status = 'published' THEN GETDATE() ELSE NULL END,
+        0,
+        0,
+        GETDATE(),
+        GETDATE()
+      );
+    `;
+
+    const postResult = await reqPost.query(insertPostQuery);
+    const postId = postResult.recordset[0].post_id;
+
+    // 5.2 Insert Post_Categories
+    if (categoryIds.length > 0) {
+      for (const cid of categoryIds) {
+        const reqCat = new sql.Request(transaction);
+        reqCat.input("post_id", sql.Int, postId);
+        reqCat.input("category_id", sql.Int, cid);
+
+        await reqCat.query(`
+          INSERT INTO Post_Categories (post_id, category_id)
+          VALUES (@post_id, @category_id);
+        `);
+      }
+    }
+
+    // 5.3 Insert Post_Tags
+    if (tagIds.length > 0) {
+      for (const tid of tagIds) {
+        const reqTag = new sql.Request(transaction);
+        reqTag.input("post_id", sql.Int, postId);
+        reqTag.input("tag_id", sql.Int, tid);
+
+        await reqTag.query(`
+          INSERT INTO Post_Tags (post_id, tag_id)
+          VALUES (@post_id, @tag_id);
+        `);
+      }
+    }
+
+    await transaction.commit();
+
+    res.send(
+      `Tạo bài viết thành công (post_id = ${postId}, slug = ${finalSlug})! <a href="/posts/new">Tạo tiếp</a>`
+    );
+  } catch (err) {
+    console.error(err);
+    if (transaction) {
+      try {
+        await transaction.rollback();
+      } catch (_) {}
+    }
+    res.send("Lỗi khi tạo bài viết: " + err.message);
+  }
+});
+
+// GET /categories/new -> form tạo category
+app.get("/categories/new", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "new_category.html"));
+});
+
+// POST /categories/new -> insert vào Categories
+app.post("/categories/new", async (req, res) => {
+  const { name, slug, description } = req.body;
+
+  if (!name) {
+    return res.send("Vui lòng nhập tên danh mục");
+  }
+
+  try {
+    const pool = await poolPromise;
+
+    // Tạo slug nếu chưa có
+    let baseSlug = slug && slug.trim() !== "" ? slugify(slug) : slugify(name);
+    let finalSlug = baseSlug;
+    let suffix = 1;
+
+    while (true) {
+      const rqSlug = pool.request();
+      rqSlug.input("slug", sql.VarChar(150), finalSlug);
+      const slugResult = await rqSlug.query(`
+        SELECT category_id FROM Categories WHERE slug = @slug;
+      `);
+      if (slugResult.recordset.length === 0) break;
+      finalSlug = `${baseSlug}-${suffix++}`;
+    }
+
+    const rq = pool.request();
+    rq.input("name", sql.VarChar(100), name);
+    rq.input("slug", sql.VarChar(150), finalSlug);
+    rq.input("description", sql.Text, description || null);
+
+    await rq.query(`
+      INSERT INTO Categories (name, slug, description, created_at, updated_at)
+      VALUES (@name, @slug, @description, GETDATE(), GETDATE());
+    `);
+
+    res.send(
+      `Tạo Category thành công (slug = ${finalSlug})! <a href="/categories/new">Tạo tiếp</a>`
+    );
+  } catch (err) {
+    console.error(err);
+    res.send("Lỗi khi tạo Category: " + err.message);
+  }
+});
+
+// GET /tags/new -> form tạo tag
+app.get("/tags/new", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "new_tag.html"));
+});
+
+// POST /tags/new -> insert vào Tags
+app.post("/tags/new", async (req, res) => {
+  const { tag_name, slug, description } = req.body;
+
+  if (!tag_name) {
+    return res.send("Vui lòng nhập tên thẻ");
+  }
+
+  try {
+    const pool = await poolPromise;
+
+    let baseSlug =
+      slug && slug.trim() !== "" ? slugify(slug) : slugify(tag_name);
+    let finalSlug = baseSlug;
+    let suffix = 1;
+
+    while (true) {
+      const rqSlug = pool.request();
+      rqSlug.input("slug", sql.VarChar(100), finalSlug);
+      const slugResult = await rqSlug.query(`
+        SELECT tag_id FROM Tags WHERE slug = @slug;
+      `);
+      if (slugResult.recordset.length === 0) break;
+      finalSlug = `${baseSlug}-${suffix++}`;
+    }
+
+    const rq = pool.request();
+    rq.input("tag_name", sql.VarChar(50), tag_name);
+    rq.input("slug", sql.VarChar(100), finalSlug);
+    rq.input("description", sql.Text, description || null);
+
+    await rq.query(`
+      INSERT INTO Tags (tag_name, slug, description, created_at, updated_at)
+      VALUES (@tag_name, @slug, @description, GETDATE(), GETDATE());
+    `);
+
+    res.send(
+      `Tạo Tag thành công (slug = ${finalSlug})! <a href="/tags/new">Tạo tiếp</a>`
+    );
+  } catch (err) {
+    console.error(err);
+    res.send("Lỗi khi tạo Tag: " + err.message);
+  }
+});
+
+// API trả danh sách Tag cho autocomplete
+app.get("/api/tags", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query(`
+      SELECT tag_id, tag_name, slug
+      FROM Tags
+      ORDER BY tag_name
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error(err);
+    res
+      .status(500)
+      .json({ error: "Lỗi lấy danh sách tag", detail: err.message });
+  }
+});
+
+// API tạo tag mới (dùng cho autocomplete @tag)
+app.post("/api/tags", async (req, res) => {
+  const { tag_name } = req.body;
+
+  if (!tag_name || !tag_name.trim()) {
+    return res.status(400).json({ error: "tag_name is required" });
+  }
+
+  try {
+    const pool = await poolPromise;
+
+    // tạo slug unique giống logic cũ
+    let baseSlug = slugify(tag_name);
+    if (!baseSlug || baseSlug.trim() === "") baseSlug = "tag";
+
+    let finalSlug = baseSlug;
+    let suffix = 1;
+
+    while (true) {
+      const rqSlug = pool.request();
+      rqSlug.input("slug", sql.VarChar(100), finalSlug);
+      const slugResult = await rqSlug.query(`
+        SELECT tag_id FROM Tags WHERE slug = @slug;
+      `);
+      if (slugResult.recordset.length === 0) break;
+      finalSlug = `${baseSlug}-${suffix++}`;
+    }
+
+    const rq = pool.request();
+    rq.input("tag_name", sql.VarChar(50), tag_name);
+    rq.input("slug", sql.VarChar(100), finalSlug);
+
+    const result = await rq.query(`
+      INSERT INTO Tags (tag_name, slug, created_at, updated_at)
+      OUTPUT INSERTED.tag_id, INSERTED.tag_name, INSERTED.slug
+      VALUES (@tag_name, @slug, GETDATE(), GETDATE());
+    `);
+
+    res.json(result.recordset[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Lỗi tạo tag", detail: err.message });
+  }
+});
+
+// API trả về danh sách categories cho form tạo bài viết
+app.get("/api/categories", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query(`
+      SELECT category_id, name
+      FROM Categories
+      ORDER BY name
+    `);
+
+    res.json(result.recordset); // [{ category_id: 1, name: 'Technology' }, ...]
+  } catch (err) {
+    console.error(err);
+    res
+      .status(500)
+      .json({ error: "Lỗi lấy danh sách category", detail: err.message });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server chạy tại http://localhost:${PORT}`);
+});

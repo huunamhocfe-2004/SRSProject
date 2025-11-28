@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Tạo bài viết</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="shortcut icon" href="/imgs/favicon.png" type="image/x-icon" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+      integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script
+      type="module"
+      src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"
+    ></script>
+    <script
+      nomodule
+      src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"
+    ></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Epunda+Sans:ital,wght@0,300..900;1,300..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Modal Preview -->
+    <div id="preview-modal" class="modal hidden">
+      <div class="modal-overlay"></div>
+
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>Xem trước bài viết</h3>
+          <button id="close-preview" class="btn ghost small" type="button">
+            <i class="fa-solid fa-x"></i>
+          </button>
+        </div>
+
+        <div class="modal-content">
+          <h1 id="m-title">Tiêu đề bài viết</h1>
+          <p class="m-slug">/<span id="m-slug">slug-bai-viet</span></p>
+
+          <p><b>Trạng thái:</b> <span id="m-status">draft</span></p>
+          <p><b>Danh mục:</b> <span id="m-category">–</span></p>
+          <p><b>Tags:</b> <span id="m-tags"></span></p>
+
+          <h3>Nội dung:</h3>
+          <div id="m-content" class="m-content-box">Nội dung xem trước…</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-shell">
+      <!-- Top bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="avatar-circle">N</div>
+          <div>
+            <div class="blog-title">Nam’s Blogger · Admin</div>
+            <div class="blog-subtitle">Soạn bài mới</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <!-- Nút đổi mode sáng / tối -->
+          <button
+            title="Chuyển chế độ"
+            type="button"
+            class="btn ghost swap-btn"
+            id="theme-toggle"
+          >
+            <i class="fa-solid fa-moon"></i>
+          </button>
+        </div>
+      </header>
+
+      <main class="page">
+        <div class="page-layout">
+          <!-- LEFT: FORM -->
+          <section class="card form-card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Tạo bài viết mới</h2>
+                <p class="card-subtitle">
+                  (Posts + Post_Categories + Post_Tags)
+                </p>
+              </div>
+              <button type="button" class="btn ghost" id="open-preview">
+                <i class="fa-solid fa-play"></i> Xem trước
+              </button>
+            </div>
+
+            <!-- GIỮ NGUYÊN logic form -->
+            <form
+              method="POST"
+              action="/posts/new"
+              class="post-form"
+              enctype="multipart/form-data"
+            >
+              <div class="form-row two-cols">
+                <div class="form-group">
+                  <div class="field-header">
+                    <label for="author_id">ID tác giả</label>
+                    <span class="field-hint"
+                      >author_id (user_id trong Users)</span
+                    >
+                  </div>
+                  <input
+                    type="number"
+                    id="author_id"
+                    name="author_id"
+                    required
+                    class="input"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <div class="field-header">
+                    <label for="status">Trạng thái</label>
+                    <span class="field-hint">Chọn trạng thái</span>
+                  </div>
+
+                  <div class="custom-select" data-placeholder="Chọn trạng thái">
+                    <!-- select gốc: vẫn được JS dùng, nhưng ẩn đi -->
+                    <select
+                      id="status"
+                      name="status"
+                      class="input select native-select"
+                    >
+                      <option value="published">Công khai</option>
+                      <option value="draft">Nháp</option>
+                      <option value="scheduled">Hẹn giờ</option>
+                      <option value="archived">Lưu trữ</option>
+                    </select>
+
+                    <!-- UI đẹp mắt -->
+                    <button type="button" class="select-display">
+                      <span class="select-display-label">Công khai</span>
+                      <span class="select-display-icon"
+                        ><i class="fa-solid fa-caret-down"></i
+                      ></span>
+                    </button>
+
+                    <div class="select-dropdown"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="field-header">
+                  <label for="title">Tiêu đề</label>
+                  <span class="field-hint"
+                    >Cố gắng cụ thể, rõ ràng, tránh trùng với bài khác.</span
+                  >
+                </div>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  required
+                  class="input"
+                  placeholder="Ví dụ: Hello world!"
+                />
+              </div>
+              <!-- SLUG (tùy chọn) -->
+              <div class="form-group">
+                <div class="field-header">
+                  <label for="slug">Đường dẫn (slug)</label>
+                  <span class="field-hint">
+                    Nếu để trống, hệ thống sẽ tự sinh từ tiêu đề. Nếu nhập thì
+                    sẽ dùng đúng slug bạn nhập.
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  id="slug"
+                  name="slug"
+                  class="input"
+                  placeholder="ví dụ: hello-world"
+                />
+              </div>
+
+              <div class="form-group">
+                <div class="field-header">
+                  <label for="title">Tóm tắt</label>
+                  <span class="field-hint"
+                    >Ghi tóm tắt nội dung nhưng phải bao quát hết nội dung</span
+                  >
+                </div>
+                <input
+                  type="text"
+                  id="excerpt"
+                  name="excerpt"
+                  class="input"
+                  placeholder="Tóm tắt"
+                />
+              </div>
+
+              <div class="form-row two-cols">
+                <!-- DANH MỤC -->
+                <div class="form-group">
+                  <div class="field-header">
+                    <label for="category-select">Danh mục / Chủ đề chính</label>
+                  </div>
+
+                  <!-- hidden: gửi lên server -->
+                  <input type="hidden" id="category_ids" name="category_ids" />
+
+                  <div
+                    class="custom-select"
+                    data-placeholder="-- Chọn chủ đề --"
+                  >
+                    <!-- select gốc: vẫn được JS dùng, nhưng ẩn đi -->
+                    <select
+                      id="category-select"
+                      class="input select native-select"
+                    >
+                      <option value="">-- Chọn chủ đề --</option>
+                      <!-- JS fetch /api/categories để fill thêm -->
+                    </select>
+
+                    <!-- UI đẹp mắt -->
+                    <button type="button" class="select-display">
+                      <span class="select-display-label"
+                        >-- Chọn chủ đề --</span
+                      >
+                      <span class="select-display-icon"
+                        ><i class="fa-solid fa-caret-down"></i
+                      ></span>
+                    </button>
+
+                    <div class="select-dropdown sd-topic"></div>
+                  </div>
+                </div>
+
+                <!-- TAGS: autocomplete @tag -->
+                <div class="form-group">
+                  <div class="field-header">
+                    <label for="tag-text">Thẻ (tags)</label>
+                    <span class="field-hint">
+                      Gõ <b>@</b> + tên thẻ, chọn từ gợi ý.
+                    </span>
+                  </div>
+
+                  <!-- hidden: gửi tag_id lên server -->
+                  <input type="hidden" id="tag_ids" name="tag_ids" />
+
+                  <div class="tag-input-wrapper" id="tag-input-wrapper">
+                    <input
+                      type="text"
+                      id="tag-text"
+                      class="input"
+                      placeholder="Ví dụ: @backend @frontend"
+                      autocomplete="off"
+                    />
+                    <div id="tag-suggestions" class="suggestions hidden"></div>
+                  </div>
+                </div>
+              </div>
+              <!-- ẢNH ĐẠI DIỆN (COVER) -->
+              <div class="form-group form-avt">
+                <div class="field-header">
+                  <label for="cover_image">Ảnh đại diện (cover)</label>
+                  <span class="field-hint">
+                    Ảnh sẽ hiển thị ở danh sách bài viết và khi chia sẻ.
+                  </span>
+                </div>
+
+                <input
+                  type="file"
+                  id="cover_image"
+                  name="cover_image"
+                  class="input"
+                  accept="image/*"
+                />
+
+                <!-- Xem trước cover (optional) -->
+                <div id="cover-preview" class="cover-preview"></div>
+              </div>
+
+              <div class="form-group">
+                <div class="field-header">
+                  <label for="content">Nội dung (Markdown)</label>
+                  <span class="field-hint">
+                    Hỗ trợ **bold**, _italic_, ### heading, list, code...
+                  </span>
+                </div>
+
+                <!-- BẮT ĐẦU: markdown editor -->
+                <div class="markdown-editor">
+                  <div class="markdown-toolbar" id="md-toolbar">
+                    <!-- Undo / Redo -->
+                    <button
+                      type="button"
+                      data-action="undo"
+                      title="Hoàn tác (Ctrl+Z)"
+                    >
+                      <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                    <button
+                      type="button"
+                      data-action="redo"
+                      title="Làm lại (Ctrl+Y)"
+                    >
+                      <i class="fa-solid fa-arrow-rotate-right"></i>
+                    </button>
+
+                    <!-- Style dropdown (heading) -->
+                    <div
+                      class="custom-select custom-select--toolbar"
+                      data-placeholder="Style"
+                    >
+                      <select
+                        id="md-style"
+                        data-action="style"
+                        class="input select native-select"
+                      >
+                        <option value="">Style</option>
+                        <option value="h1">Tiêu đề 1</option>
+                        <option value="h2">Tiêu đề 2</option>
+                        <option value="h3">Tiêu đề 3</option>
+                        <option value="p">Thường</option>
+                      </select>
+
+                      <button
+                        type="button"
+                        class="select-display select-display--sm"
+                      >
+                        <span class="select-display-label">Style</span>
+                        <span class="select-display-icon">
+                          <i class="fa-solid fa-caret-down"></i>
+                        </span>
+                      </button>
+
+                      <div class="select-dropdown"></div>
+                    </div>
+
+                    <!-- B / I / S / code -->
+                    <button type="button" data-format="bold" title="Bold">
+                      <i class="fa-solid fa-bold"></i>
+                    </button>
+                    <button type="button" data-format="italic" title="Italic">
+                      <i class="fa-solid fa-italic"></i>
+                    </button>
+                    <button
+                      type="button"
+                      data-format="strike"
+                      title="Strikethrough"
+                    >
+                      <s><i class="fa-solid fa-strikethrough"></i></s>
+                    </button>
+                    <button type="button" data-action="code" title="Code">
+                      <i class="fa-solid fa-code"></i>
+                    </button>
+
+                    <!-- Link / Image / Audio / Video / Quote -->
+                    <button type="button" data-action="link" title="Chèn link">
+                      <i class="fa-solid fa-link"></i>
+                    </button>
+                    <button type="button" data-action="image" title="Chèn ảnh">
+                      <i class="fa-regular fa-image"></i>
+                    </button>
+                    <button
+                      type="button"
+                      data-action="audio"
+                      title="Chèn audio"
+                    >
+                      <i class="fa-solid fa-headphones"></i>
+                    </button>
+                    <button
+                      type="button"
+                      data-action="video"
+                      title="Chèn video"
+                    >
+                      <i class="fa-solid fa-video"></i>
+                    </button>
+                    <button type="button" data-action="quote" title="Trích dẫn">
+                      <i class="fa-solid fa-quote-left"></i>
+                    </button>
+
+                    <!-- List -->
+                    <button
+                      type="button"
+                      data-action="ul"
+                      title="Danh sách bullet"
+                    >
+                      <ion-icon name="list-outline"></ion-icon>
+                    </button>
+                    <button type="button" data-action="ol" title="Danh sách số">
+                      1. <ion-icon name="list-outline"></ion-icon>
+                    </button>
+                  </div>
+                  <!-- Popup Insert Link -->
+                  <div id="md-link-popup" class="md-popup hidden">
+                    <div class="md-popup-box">
+                      <h4>Create a link</h4>
+
+                      <input
+                        type="text"
+                        id="md-link-text"
+                        class="input"
+                        placeholder="Enter text…"
+                      />
+                      <input
+                        type="text"
+                        id="md-link-url"
+                        class="input"
+                        placeholder="Enter URL…"
+                      />
+
+                      <div class="md-popup-actions">
+                        <button
+                          id="md-link-insert"
+                          class="btn primary"
+                          type="button"
+                        >
+                          Link
+                        </button>
+                        <button
+                          id="md-link-cancel"
+                          class="btn ghost"
+                          type="button"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Popup Insert Image -->
+                  <input
+                    type="file"
+                    id="md-image-picker"
+                    accept="image/*"
+                    hidden
+                  />
+
+                  <!-- textarea GIỮ NGUYÊN -->
+                  <textarea
+                    id="content"
+                    name="content"
+                    required
+                    class="input textarea"
+                    rows="7"
+                    placeholder="Viết nội dung bài viết tại đây..."
+                  ></textarea>
+                </div>
+                <!-- KẾT THÚC: markdown editor -->
+              </div>
+
+              <div class="form-footer">
+                <div class="form-footer-left">
+                  <button type="button" class="btn ghost" id="reset-btn">
+                    Bỏ thay đổi
+                  </button>
+                </div>
+                <div class="form-footer-right">
+                  <button type="submit" class="btn primary">
+                    <i class="fa-solid fa-print"></i> Xuất bản
+                  </button>
+                </div>
+              </div>
+            </form>
+          </section>
+
+          <!-- RIGHT: PREVIEW (ban đầu ẩn) -->
+          <section class="card preview-card hidden" id="preview-section">
+            <h3 class="preview-title">Bài viết vừa tạo</h3>
+            <div class="preview-box" id="preview-box">
+              <!-- Loading overlay -->
+              <div class="preview-loading hidden" id="preview-loading">
+                <div class="spinner"></div>
+                <span>Đang xuất bản...</span>
+              </div>
+
+              <p class="preview-meta">
+                <span class="preview-label">Trạng thái:</span>
+                <span id="preview-status">draft</span>
+              </p>
+
+              <h4 class="preview-post-title" id="preview-title">
+                Tiêu đề bài viết
+              </h4>
+              <p class="preview-slug">
+                /<span id="preview-slug">slug-bai-viet</span>
+              </p>
+
+              <p class="preview-meta">
+                <span class="preview-label">Danh mục:</span>
+                <span id="preview-category-ids">–</span>
+              </p>
+
+              <p class="preview-meta">
+                <span class="preview-label">Tóm tắt:</span>
+                <span id="preview-summary">Chưa có nội dung.</span>
+              </p>
+
+              <p class="preview-meta">
+                <span class="preview-label">Tags:</span>
+                <span id="preview-tags"></span>
+              </p>
+
+              <div class="preview-content">
+                <p class="preview-label">Nội dung:</p>
+                <p id="preview-content-text">
+                  Nội dung xem trước sẽ hiện ở đây.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- JS -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/js/script.js"></script>
+  </body>
+</html>

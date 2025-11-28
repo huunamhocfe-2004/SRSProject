@@ -1,0 +1,78 @@
+/* Reset nhẹ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+/* Nền tổng thể */
+body {
+  background: #f3f4f6;
+  padding: 40px 0;
+}
+
+/* Container chính */
+.container {
+  width: 450px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 28px 32px;
+  border-radius: 12px;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
+}
+
+.container h2 {
+  text-align: center;
+  margin-bottom: 22px;
+  color: #333;
+  font-size: 22px;
+}
+
+/* Form */
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #444;
+}
+
+/* Input + textarea */
+input[type="text"],
+textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+  border-color: #2563eb;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Nút submit */
+.btn-submit {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.btn-submit:hover {
+  background: #1d4ed8;
+}

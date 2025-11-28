@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Tạo danh mục (Category)</title>
+  <link rel="stylesheet" href="/css/category.css">
+</head>
+<body>
+<div class="container">
+  <h2>Tạo danh mục mới</h2>
+
+  <form method="POST" action="/categories/new" class="form-box">
+
+    <div class="form-group">
+      <label for="name">Tên danh mục</label>
+      <input type="text" id="name" name="name" required>
+    </div>
+
+    <div class="form-group">
+      <label for="slug">Slug</label>
+      <input type="text" id="slug" name="slug" placeholder="Bỏ trống để tự tạo từ tên">
+    </div>
+
+    <div class="form-group">
+      <label for="description">Mô tả</label>
+      <textarea id="description" name="description"></textarea>
+    </div>
+
+    <button type="submit" class="btn-submit">Tạo danh mục</button>
+
+  </form>
+</div>
+</body>
+</html>

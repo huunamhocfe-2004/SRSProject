@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Tạo thẻ (Tag)</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="container">
+  <h2>Tạo thẻ mới (Tags)</h2>
+  <form method="POST" action="/tags/new">
+    <label>Tên thẻ</label>
+    <input type="text" name="tag_name" required>
+
+    <label>Slug</label>
+    <input type="text" name="slug" placeholder="Bỏ trống để tự tạo từ tên">
+
+    <label>Mô tả</label>
+    <textarea name="description"></textarea>
+
+    <button type="submit">Tạo thẻ</button>
+  </form>
+</div>
+</body>
+</html>
