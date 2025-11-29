@@ -61,28 +61,25 @@
           <!-- USER MENU WRAPPER -->
           <div class="user-menu">
             <!-- Avatar click để mở popup -->
-            <button
+            <div
               type="button"
               class="avatar-circle"
               id="user-menu-toggle"
               title="Tài khoản"
             >
-              N
-            </button>
+              <img id="avatar-img" src="" alt="" />
+            </div>
 
             <!-- Popup đăng xuất -->
             <div class="user-menu-popup hidden" id="user-menu-popup">
-              <div class="user-menu-info">
-                <div class="user-menu-name" id="user-menu-name">
-                  Nam’s Blogger
-                </div>
-                <div class="user-menu-email" id="user-menu-email"></div>
-              </div>
-              <button
-                type="button"
-                class="btn ghost full-width"
-                id="logout-btn"
-              >
+              <ul class="list-menu-popup">
+                <li id="change-avatar-btn">
+                  <input type="file" id="avatar-file" accept="image/*" hidden />
+                  <i class="fa-solid fa-image"></i> Change avatar
+                </li>
+              </ul>
+              <div class="separated"></div>
+              <button type="button" id="logout-btn">
                 <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
               </button>
             </div>
@@ -91,8 +88,8 @@
           <div>
             <div class="blog-name">
               <div class="blog-title" id="blog-title"></div>
+              <div class="user-menu-email" id="user-menu-email"></div>
             </div>
-            <div class="blog-name-sub">Member</div>
           </div>
         </div>
         <div class="topbar-right">
@@ -115,9 +112,7 @@
             <div class="card-header">
               <div>
                 <h2 class="card-title">Tạo bài viết mới</h2>
-                <p class="card-subtitle">
-                  (Posts + Post_Categories + Post_Tags)
-                </p>
+                <p class="card-subtitle" id="card-categories"></p>
               </div>
               <button type="button" class="btn ghost" id="open-preview">
                 <i class="fa-solid fa-play"></i> Xem trước
@@ -201,8 +196,7 @@
                 <div class="field-header">
                   <label for="slug">Đường dẫn (slug)</label>
                   <span class="field-hint">
-                    Nếu để trống, hệ thống sẽ tự sinh từ tiêu đề. Nếu nhập thì
-                    sẽ dùng đúng slug bạn nhập.
+                    Slug tự sinh hoặc có thể nhập
                   </span>
                 </div>
                 <input
@@ -234,7 +228,7 @@
                 <!-- DANH MỤC -->
                 <div class="form-group">
                   <div class="field-header">
-                    <label for="category-select">Danh mục / Chủ đề chính</label>
+                    <label for="category-select">Chủ đề chính</label>
                   </div>
 
                   <!-- hidden: gửi lên server -->
@@ -473,7 +467,7 @@
                     id="content"
                     name="content"
                     required
-                    class="input textarea"
+                    class="textarea"
                     rows="7"
                     placeholder="Viết nội dung bài viết tại đây..."
                   ></textarea>

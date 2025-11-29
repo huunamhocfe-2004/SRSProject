@@ -55,26 +55,13 @@ body {
 
 /* ========= HERO (BÊN TRÁI) ========= */
 .auth-hero {
-  max-width: 520px;
-  padding: 28px 26px;
-  border-radius: 26px;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  /* background: radial-gradient(
-    circle at top left,
-    #e4b676,
-    #e0a3a3 45%,
-    hsl(210, 20%, 98%)
-  ); */
-  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+  /* max-width: 1000px; */
+  width: 100%;
   position: relative;
   overflow: hidden;
-  background: repeating-linear-gradient(
-    -7deg,
-    #fef3c7 0,
-    #fef3c7 3px,
-    #ffffff 3px,
-    #ffffff 8px
-  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .hero-chip {
@@ -131,18 +118,19 @@ body {
 /* ========= AUTH CARD ========= */
 .auth-wrapper {
   display: flex;
-  justify-content: center;
+  justify-content: start;
   align-items: center;
 }
 
 .auth-card {
   width: 100%;
   max-width: 420px;
-  background: var(--card-bg);
+  /* background: var(--card-bg); */
   height: fit-content !important;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--card-border);
-  box-shadow: var(--card-shadow);
+  /* border: 1px solid var(--card-border); */
+  /* box-shadow: var(--card-shadow); */
+  box-shadow: 0 26px 60px rgba(148, 110, 69, 0.26);
   padding: 24px 22px 22px;
   position: relative;
   overflow: hidden;
@@ -174,7 +162,7 @@ body {
 .auth-logo {
   width: 38px;
   height: 38px;
-  border-radius: 14px;
+  border-radius: 50%;
   background: radial-gradient(circle at 30% 0, #fef3c7, #f97316);
   display: flex;
   align-items: center;
@@ -224,7 +212,7 @@ body {
 .auth-titles {
   position: relative;
   min-height: 58px;
-  margin-bottom: 10px;
+  text-align: center;
 }
 
 .title-panel {
@@ -242,7 +230,7 @@ body {
 }
 
 .title-panel p {
-  margin: 4px 0 0;
+  margin: 10px 0;
   font-size: 13px;
   color: var(--text-soft);
 }
@@ -270,12 +258,9 @@ body {
 /* ========= FORMS ========= */
 .auth-forms {
   position: relative;
-  min-height: 350px;
+  min-height: 370px;
   height: fit-content;
-}
-.form-wrapper {
-  border: 1px solid #000;
-  height: 100%;
+  margin-top: 40px;
 }
 .auth-form {
   display: flex;
@@ -339,6 +324,7 @@ label {
   font-size: 12px;
   color: var(--accent-strong);
   text-decoration: none;
+  font-weight: 600;
 }
 
 .field-link:hover {
@@ -352,7 +338,7 @@ label {
 .input-wrapper input {
   width: 100%;
   padding: 10px 12px 10px 42px;
-  border-radius: 14px;
+  border-radius: 5px;
   border: 1px solid #e5e7eb;
   font-size: 14px;
   outline: none;
@@ -378,9 +364,7 @@ label {
   transform: translateY(-50%);
   width: 26px;
   height: 26px;
-  border-radius: 999px;
-  background-color: #f9fafb;
-  border: 1px solid rgba(229, 231, 235, 0.9);
+  border-right: 1px solid rgba(229, 231, 235, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -397,7 +381,7 @@ label {
 .form-footer {
   margin-top: 6px;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
@@ -419,6 +403,7 @@ label {
   background: transparent;
   padding: 0;
   font-size: 13px;
+  font-weight: 600;
   color: var(--accent-strong);
   cursor: pointer;
   text-decoration: none;
@@ -438,7 +423,7 @@ label {
   border: none;
   padding: 9px 18px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;

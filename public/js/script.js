@@ -11,78 +11,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const userMenuToggle = document.getElementById("user-menu-toggle");
   const userMenuPopup = document.getElementById("user-menu-popup");
   const logoutBtn = document.getElementById("logout-btn");
+  const changeAvatarBtn = document.getElementById("change-avatar-btn");
   const userMenuName = document.getElementById("user-menu-name");
   const userMenuEmail = document.getElementById("user-menu-email");
-  // ===== Lấy user đang đăng nhập và hiển thị lên UI =====
-  async function loadCurrentUser() {
-    try {
-      const res = await fetch("/api/me");
-      if (res.status === 401) {
-        // chưa đăng nhập -> quay về /login
-        window.location.href = "/login";
-        return;
-      }
-
-      const user = await res.json(); // { user_id, name, email }
-
-      if (authorInput && user.user_id) {
-        authorInput.value = user.user_id;
-        authorInput.readOnly = true;
-      }
-
-      if (blogTitle && user.name) {
-        blogTitle.textContent = `${user.name}`;
-      }
-
-      if (userMenuName && user.name) {
-        userMenuName.textContent = user.name;
-      }
-      if (userMenuEmail && user.email) {
-        userMenuEmail.textContent = user.email;
-      }
-
-      // Avatar hiển thị chữ cái đầu tên
-      if (userMenuToggle && user.name) {
-        userMenuToggle.textContent = user.name.trim()[0].toUpperCase();
-      }
-    } catch (err) {
-      console.error("Lỗi load user hiện tại:", err);
-      window.location.href = "/login";
-    }
-  }
-
-  // Gọi luôn khi vào trang tạo bài mới
-  loadCurrentUser();
-
-  // Gọi luôn khi vào trang
-  loadCurrentUser();
-
-  // ===== User menu: mở popup khi click avatar =====
-  if (userMenuToggle && userMenuPopup) {
-    userMenuToggle.addEventListener("click", (e) => {
-      e.stopPropagation();
-      userMenuPopup.classList.toggle("hidden");
-    });
-
-    // Click bên ngoài thì đóng popup
-    document.addEventListener("click", (e) => {
-      if (
-        !userMenuPopup.classList.contains("hidden") &&
-        !userMenuPopup.contains(e.target) &&
-        !userMenuToggle.contains(e.target)
-      ) {
-        userMenuPopup.classList.add("hidden");
-      }
-    });
-  }
-
-  // ===== Logout =====
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      // Gọi route /logout rồi server sẽ redirect về /login
-      window.location.href = "/logout";
-    });
-  }
+  const avatarFileInput = document.getElementById("avatar-file");
+  const avatarImg = document.getElementById("avatar-img");
+  const cardCategories = document.getElementById("card-categories");
 
   // Slug (tùy chọn)
   const slugInput = document.getElementById("slug");
@@ -135,6 +69,178 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== Custom select UI (status + category) =====
   const customSelectMap = new WeakMap();
+
+  // mảng lưu các danh mục đã chọn
+  let selectedCategories = []; // [{ id: number, name: string }]
+
+  // ===== Lấy user đang đăng nhập và hiển thị lên UI =====
+  async function loadCurrentUser() {
+    try {
+      const res = await fetch("/api/me");
+      if (res.status === 401) {
+        // chưa đăng nhập -> quay về /login
+        window.location.href = "/login";
+        return;
+      }
+
+      const user = await res.json(); // { user_id, name, email }
+
+      if (authorInput && user.user_id) {
+        authorInput.value = user.user_id;
+        authorInput.readOnly = true;
+      }
+
+      if (blogTitle && user.name) {
+        blogTitle.textContent = `${user.name}`;
+      }
+
+      if (userMenuName && user.name) {
+        userMenuName.textContent = user.name;
+      }
+      if (userMenuEmail && user.email) {
+        userMenuEmail.textContent = user.email;
+      }
+
+      if (userMenuToggle && user.name && !avatarImg?.src) {
+        // Nếu chưa có ảnh thì lấy chữ cái đầu
+        userMenuToggle.setAttribute(
+          "data-initial",
+          user.name.trim()[0].toUpperCase()
+        );
+      }
+
+      // Hiển thị avatar nếu có
+      if (avatarImg && user.avatar_url) {
+        avatarImg.src = user.avatar_url;
+        avatarImg.style.display = "block";
+      } else if (avatarImg && userMenuToggle?.dataset.initial) {
+        // fallback: chữ cái đầu -> có thể dùng CSS background/text
+        avatarImg.style.display = "none"; // dùng CSS khác nếu muốn
+      }
+    } catch (err) {
+      console.error("Lỗi load user hiện tại:", err);
+      window.location.href = "/login";
+    }
+  }
+
+  // Gọi luôn khi vào trang tạo bài mới
+  loadCurrentUser();
+
+  // Gọi luôn khi vào trang
+  loadCurrentUser();
+
+  // ===== User menu: mở popup khi click avatar =====
+  if (userMenuToggle && userMenuPopup) {
+    userMenuToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      userMenuPopup.classList.toggle("hidden");
+    });
+
+    // Click bên ngoài thì đóng popup
+    document.addEventListener("click", (e) => {
+      if (
+        !userMenuPopup.classList.contains("hidden") &&
+        !userMenuPopup.contains(e.target) &&
+        !userMenuToggle.contains(e.target)
+      ) {
+        userMenuPopup.classList.add("hidden");
+      }
+    });
+  }
+
+  // ===== Change avatar: pick file + preview + upload =====
+  if (changeAvatarBtn && avatarFileInput) {
+    // Click "Change avatar" -> mở chọn file
+    changeAvatarBtn.addEventListener("click", () => {
+      avatarFileInput.click();
+    });
+
+    avatarFileInput.addEventListener("change", async () => {
+      const file = avatarFileInput.files[0];
+      if (!file) {
+        return;
+      } else {
+        userMenuPopup.classList.add("hidden");
+      }
+
+      // Preview ngay trên UI
+      const url = URL.createObjectURL(file);
+      avatarImg.src = url;
+      avatarImg.style.display = "block";
+
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      await fetch("/api/avatar", {
+        method: "POST",
+        body: formData,
+      });
+    });
+  }
+
+  // ===== Logout =====
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      // Gọi route /logout rồi server sẽ redirect về /login
+      window.location.href = "/logout";
+    });
+  }
+  function updateCategoryHiddenInput() {
+    if (!categoryIdsInput) return;
+    const ids = selectedCategories.map((c) => c.id);
+    categoryIdsInput.value = ids.join(","); // ví dụ "1,3,5"
+  }
+
+  function renderCategoryChips() {
+    // ======== 1) Preview bên phải (KHÔNG nút X, dạng danh sách) ========
+    if (previewCategoryIds) {
+      if (selectedCategories.length === 0) {
+        previewCategoryIds.textContent = "–";
+      } else {
+        const names = selectedCategories.map((c) => c.name);
+        previewCategoryIds.textContent = names.join(", "); // Ví dụ: Frontend, Backend
+      }
+    }
+
+    // Chip ngay trên card-subtitle
+    if (cardCategories) {
+      cardCategories.innerHTML = "";
+      if (selectedCategories.length > 0) {
+        selectedCategories.forEach((cat) => {
+          const chip = document.createElement("span");
+          chip.className = "cat-pill";
+          chip.dataset.id = cat.id;
+          chip.innerHTML = `
+            ${cat.name}
+            <button type="button" class="cat-remove" data-id="${cat.id}"><i class="fa-solid fa-x"></i></button>
+          `;
+          cardCategories.appendChild(chip);
+        });
+      }
+    }
+  }
+  function handleCategoryChipClick(e) {
+    const removeBtn = e.target.closest(".cat-remove");
+    if (!removeBtn) return;
+
+    const id = Number(removeBtn.dataset.id);
+    if (!id) return;
+
+    // Xoá khỏi mảng selectedCategories
+    selectedCategories = selectedCategories.filter((c) => c.id !== id);
+
+    // Cập nhật hidden + UI
+    updateCategoryHiddenInput();
+    renderCategoryChips();
+  }
+
+  if (previewCategoryIds) {
+    previewCategoryIds.addEventListener("click", handleCategoryChipClick);
+  }
+
+  if (cardCategories) {
+    cardCategories.addEventListener("click", handleCategoryChipClick);
+  }
 
   function initCustomSelect(selectEl) {
     if (!selectEl) return;
@@ -316,6 +422,46 @@ document.addEventListener("DOMContentLoaded", () => {
   contentInput.addEventListener("input", updateContent);
 
   // ===== Category: load từ API + sync hidden + preview =====
+  // async function loadCategories() {
+  //   if (!categorySelect) return;
+  //   try {
+  //     const res = await fetch("/api/categories");
+  //     const data = await res.json();
+
+  //     categorySelect.innerHTML = '<option value="">-- Chọn chủ đề --</option>';
+
+  //     data.forEach((cat) => {
+  //       const opt = document.createElement("option");
+  //       opt.value = cat.category_id;
+  //       opt.textContent = cat.name;
+  //       categorySelect.appendChild(opt);
+  //     });
+
+  //     const custom = customSelectMap.get(categorySelect);
+  //     if (custom && typeof custom.refresh === "function") {
+  //       custom.refresh();
+  //     }
+  //   } catch (err) {
+  //     console.error("Lỗi load categories:", err);
+  //   }
+  // }
+
+  // function syncCategoryFromSelect() {
+  //   if (!categorySelect || !categoryIdsInput) return;
+
+  //   const selectedValue = categorySelect.value;
+  //   const selectedText =
+  //     categorySelect.options[categorySelect.selectedIndex]?.textContent || "";
+
+  //   if (!selectedValue) {
+  //     categoryIdsInput.value = "";
+  //     previewCategoryIds.textContent = "–";
+  //   } else {
+  //     categoryIdsInput.value = selectedValue;
+  //     previewCategoryIds.textContent = selectedText;
+  //   }
+  // }
+
   async function loadCategories() {
     if (!categorySelect) return;
     try {
@@ -340,26 +486,137 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function syncCategoryFromSelect() {
-    if (!categorySelect || !categoryIdsInput) return;
+  function updateCategoryHiddenInput() {
+    if (!categoryIdsInput) return;
+    const ids = selectedCategories.map((c) => c.id);
+    categoryIdsInput.value = ids.join(",");
+  }
 
-    const selectedValue = categorySelect.value;
-    const selectedText =
+  // function renderCategoryChips() {
+  //   // Preview bên phải
+  //   if (previewCategoryIds) {
+  //     previewCategoryIds.innerHTML = "";
+  //     if (selectedCategories.length === 0) {
+  //       previewCategoryIds.textContent = "–";
+  //     } else {
+  //       selectedCategories.forEach((cat) => {
+  //         const chip = document.createElement("span");
+  //         chip.className = "cat-pill";
+  //         chip.dataset.id = cat.id;
+  //         chip.innerHTML = `
+  //           ${cat.name}
+  //           <button type="button" class="cat-remove" data-id="${cat.id}"><i class="fa-solid fa-x"></i></button>
+  //         `;
+  //         previewCategoryIds.appendChild(chip);
+  //       });
+  //     }
+  //   }
+
+  //   // Card subtitle
+  //   if (cardCategories) {
+  //     cardCategories.innerHTML = "";
+  //     if (selectedCategories.length > 0) {
+  //       selectedCategories.forEach((cat) => {
+  //         const chip = document.createElement("span");
+  //         chip.className = "cat-pill";
+  //         chip.dataset.id = cat.id;
+  //         chip.innerHTML = `
+  //           ${cat.name}
+  //           <button type="button" class="cat-remove" data-id="${cat.id}"><i class="fa-solid fa-x"></i></button>
+  //         `;
+  //         cardCategories.appendChild(chip);
+  //       });
+  //     }
+  //   }
+  // }
+
+  function handleCategorySelectChange() {
+    if (!categorySelect) return;
+
+    const value = categorySelect.value;
+    if (!value) return;
+
+    const id = Number(value);
+    const name =
       categorySelect.options[categorySelect.selectedIndex]?.textContent || "";
 
-    if (!selectedValue) {
-      categoryIdsInput.value = "";
-      previewCategoryIds.textContent = "–";
-    } else {
-      categoryIdsInput.value = selectedValue;
-      previewCategoryIds.textContent = selectedText;
+    if (!id || !name) return;
+
+    if (!selectedCategories.some((c) => c.id === id)) {
+      selectedCategories.push({ id, name });
+      updateCategoryHiddenInput();
+      renderCategoryChips();
+    }
+
+    // reset select về placeholder
+    categorySelect.value = "";
+    const custom = customSelectMap.get(categorySelect);
+    if (custom && typeof custom.refresh === "function") {
+      custom.refresh();
     }
   }
 
   if (categorySelect) {
-    categorySelect.addEventListener("change", syncCategoryFromSelect);
-    loadCategories().then(syncCategoryFromSelect);
+    categorySelect.addEventListener("change", handleCategorySelectChange);
+    loadCategories();
   }
+
+  function handleCategoryChipClick(event) {
+    const removeBtn = event.target.closest(".cat-remove");
+    if (!removeBtn) return;
+
+    const id = Number(removeBtn.dataset.id);
+    if (!id) return;
+
+    selectedCategories = selectedCategories.filter((c) => c.id !== id);
+    updateCategoryHiddenInput();
+    renderCategoryChips();
+  }
+
+  if (previewCategoryIds) {
+    previewCategoryIds.addEventListener("click", handleCategoryChipClick);
+  }
+  if (cardCategories) {
+    cardCategories.addEventListener("click", handleCategoryChipClick);
+  }
+
+  // function handleCategorySelectChange() {
+  //   if (!categorySelect) return;
+
+  //   const value = categorySelect.value;
+  //   if (!value) return;
+
+  //   const id = Number(value);
+  //   const name =
+  //     categorySelect.options[categorySelect.selectedIndex]?.textContent || "";
+
+  //   if (!id || !name) return;
+
+  //   // Không thêm trùng
+  //   if (!selectedCategories.some((c) => c.id === id)) {
+  //     selectedCategories.push({ id, name });
+  //     updateCategoryHiddenInput();
+  //     renderCategoryChips();
+  //   }
+
+  //   // Reset select về placeholder để chọn tiếp
+  //   categorySelect.value = "";
+
+  //   // refresh UI custom-select nếu có
+  //   const custom = customSelectMap.get(categorySelect);
+  //   if (custom && typeof custom.refresh === "function") {
+  //     custom.refresh();
+  //   }
+  // }
+  // if (categorySelect) {
+  //   categorySelect.addEventListener("change", handleCategorySelectChange);
+  //   loadCategories(); // chỉ load list, KHÔNG gọi syncCategoryFromSelect nữa
+  // }
+
+  // if (categorySelect) {
+  //   categorySelect.addEventListener("change", syncCategoryFromSelect);
+  //   loadCategories().then(syncCategoryFromSelect);
+  // }
 
   // ===== Tags: autocomplete @tag + auto-create nếu chưa có =====
   let allTags = [];
@@ -538,9 +795,21 @@ document.addEventListener("DOMContentLoaded", () => {
     resetBtn.addEventListener("click", () => {
       form.reset();
 
+      // Reset categories
+      selectedCategories = [];
+      updateCategoryHiddenInput();
+      renderCategoryChips();
+
+      // if (categorySelect) {
+      //   categorySelect.value = "";
+      //   syncCategoryFromSelect();
+      // }
       if (categorySelect) {
         categorySelect.value = "";
-        syncCategoryFromSelect();
+        const custom = customSelectMap.get(categorySelect);
+        if (custom && typeof custom.refresh === "function") {
+          custom.refresh();
+        }
       }
 
       selectedTagIds = [];
@@ -615,7 +884,7 @@ document.addEventListener("DOMContentLoaded", () => {
       updateExcerpt();
       updateStatus();
       updateContent();
-      syncCategoryFromSelect();
+      // syncCategoryFromSelect();
       updateTagHiddenAndPreview();
 
       try {
@@ -648,7 +917,7 @@ document.addEventListener("DOMContentLoaded", () => {
       updateExcerpt();
       updateStatus();
       updateContent();
-      syncCategoryFromSelect();
+      // syncCategoryFromSelect();
       updateTagHiddenAndPreview();
 
       mTitle.textContent = previewTitle.textContent;
@@ -841,11 +1110,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const linkUrl = document.getElementById("md-link-url");
     const linkInsert = document.getElementById("md-link-insert");
     const linkCancel = document.getElementById("md-link-cancel");
-
-    const imagePopup = document.getElementById("md-image-popup");
-    const imageFile = document.getElementById("md-image-file");
-    const imageInsert = document.getElementById("md-image-insert");
-    const imageCancel = document.getElementById("md-image-cancel");
 
     // ========= Open popup =========
     function openLinkPopup() {

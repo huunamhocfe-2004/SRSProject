@@ -3,6 +3,9 @@ const express = require("express");
 const path = require("path");
 const { sql, poolPromise } = require("./db");
 const session = require("express-session");
+const multer = require("multer");
+const bcrypt = require("bcryptjs");
+
 
 const app = express();
 const PORT = 3000;
@@ -54,21 +57,35 @@ app.post("/register", async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Ở đây mình lưu plain text cho dễ, thực tế nên hash
+    // HASH PASSWORD
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
     const request = pool.request();
     request.input("user_name", sql.VarChar(50), user_name);
     request.input("name", sql.VarChar(100), name);
     request.input("email", sql.VarChar(100), email);
-    request.input("password_hash", sql.VarChar(255), password);
+    request.input("password_hash", sql.VarChar(255), passwordHash);
 
-    const query = `
+    // Lấy luôn user_id vừa tạo bằng OUTPUT
+    const result = await request.query(`
       INSERT INTO Users (user_name, name, email, password_hash, role, status, created_at)
+      OUTPUT INSERTED.user_id, INSERTED.name, INSERTED.email, INSERTED.avatar_url
       VALUES (@user_name, @name, @email, @password_hash, 'member', 'active', GETDATE())
-    `;
+    `);
 
-    await request.query(query);
+    const newUser = result.recordset[0];
 
-    res.send('Đăng ký thành công! <a href="/register">Quay lại</a>');
+    // 👉 ĐĂNG NHẬP LUÔN: set session giống /login
+    req.session.user = {
+      user_id: newUser.user_id,
+      name: newUser.name,
+      email: newUser.email,
+      avatar_url: newUser.avatar_url, // nếu chưa có thì null cũng được
+    };
+
+    // Bây giờ /posts/new sẽ cho vào vì đã có req.session.user
+    res.redirect("/posts/new");
   } catch (err) {
     console.error(err);
     res.send("Lỗi khi đăng ký: " + err.message);
@@ -100,7 +117,7 @@ app.post("/login", async (req, res) => {
     rq.input("email", sql.VarChar(100), email);
 
     const result = await rq.query(`
-      SELECT user_id, name, email, password_hash
+      SELECT user_id, name, email, password_hash, avatar_url
       FROM Users
       WHERE email = @email;
     `);
@@ -111,8 +128,8 @@ app.post("/login", async (req, res) => {
 
     const user = result.recordset[0];
 
-    // Bạn đang lưu plain text vào password_hash, nên chỉ cần so sánh chuỗi
-    if (user.password_hash !== password) {
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
       return res.send("Email không tồn tại hoặc mật khẩu không đúng!");
     }
 
@@ -121,6 +138,7 @@ app.post("/login", async (req, res) => {
       user_id: user.user_id,
       name: user.name,
       email: user.email,
+      avatar_url: user.avatar_url,
     };
 
     // Đăng nhập xong, chuyển sang trang tạo bài viết
@@ -552,6 +570,58 @@ app.get("/api/me", (req, res) => {
 //     res.redirect("/login");
 //   });
 // });
+// Folder lưu avatar: public/uploads/avatars
+const avatarStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, "public", "uploads", "avatars"));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || ".png";
+    const userId = req.session.user?.user_id || "guest";
+    const filename = `user_${userId}_${Date.now()}${ext}`;
+    cb(null, filename);
+  },
+});
+
+const uploadAvatar = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+});
+
+// Upload avatar và lưu vào Users.avatar_url
+app.post("/api/avatar", uploadAvatar.single("avatar"), async (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.status(401).json({ error: "Chưa đăng nhập" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Không có file avatar" });
+    }
+
+    const userId = req.session.user.user_id;
+    const avatarUrl = "/uploads/avatars/" + req.file.filename;
+
+    const pool = await poolPromise;
+    const rq = pool.request();
+    rq.input("avatar_url", sql.VarChar(255), avatarUrl);
+    rq.input("user_id", sql.BigInt, userId);
+
+    await rq.query(`
+      UPDATE Users
+      SET avatar_url = @avatar_url
+      WHERE user_id = @user_id;
+    `);
+
+    // Cập nhật lại session
+    req.session.user.avatar_url = avatarUrl;
+
+    res.json({ avatar_url: avatarUrl });
+  } catch (err) {
+    console.error("Lỗi upload avatar:", err);
+    res.status(500).json({ error: "Lỗi upload avatar", detail: err.message });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`🚀 Server chạy tại http://localhost:${PORT}`);
